@@ -74,7 +74,7 @@ private-key.  This hashed password is then used as a key to decrypt the SecureFS
 This process allows having  changeable auser-defined password for browser-entry and a independent password for
 SecureFS accessr, while limiting the exposure of the browser's access to 24 hours between password entry.
 
-# Beancount and GPG   
+## Beancount and GPG
 Beancount has native support for GPG encryption at the file level, and Fava can support that as well, seemingly
 making this project a waste of time.  However teh GPG process does not work very well with multi-file beancount
 files (in my experience) and using it disables editing in Fava.  Additionally, using Fava-encrypt allows keeping
