@@ -1,0 +1,21 @@
+version: "3.9"
+services:
+  beancount:
+    container_name: beancount
+    build:
+      context: .
+      args:
+        - NGINX_PORT_REDIRECT: on              # Set to 'off' if docker image will sit behind a reverse-proxy
+        # - PIP_MODULES: "scipy"               # Add any extra pip modules here
+        # - LEDGER_DIR: /ledger/beancount      # Should always be a path underneath /ledger
+        # - ENCRYPTED_DIR: /mnt/disk/secure    # Needed when the Docker mount-point is not the same as the encrypted-root
+    cap_add: 
+      - SYS_ADMIN
+    devices:
+      - /dev/fuse
+    security_opt:
+      - apparmor:unconfined
+    volumes:
+      - "/path/to/encryped/dir:/secure"
+    ports:
+      - 5000:5000
