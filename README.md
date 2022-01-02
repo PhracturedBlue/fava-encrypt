@@ -24,7 +24,7 @@ data secure at-rest (i.e. most of the time when beancount is not being used).
   * Create a file `$SECUREFS_PATH/.encrypted` (at the same level as the beancount file)
     * This is used by Fava to detect if the path is currently decrypted or not
   * Copy the `plugins/enable_encryption.py` file to `$SECUREFS_PATH/plugins/enable_encryption.py`
-  * Add `plugin "plugins.enable_encryption" ""` to the database.beancount file (near tehe top)
+  * Add `plugin "plugins.enable_encryption" ""` to the database.beancount file (near the top)
   * Unmount SecureFS
   * Generate `auth.token` file from securefs/browser-passwords
     ```
@@ -46,10 +46,10 @@ data secure at-rest (i.e. most of the time when beancount is not being used).
  * Nginx receives all connections
  * Each request is forwarded to the `listener` to check for authentication
    * Fava `change` queries are not authenticated and do not trigger decryption
- * listener checks if user has a valid `auth` token < 24hours old
+ * `listener` checks if user has a valid `auth` token < 24hours old
    * if no, then nginx sends user to login page
      * User enters password, which is validated, hashed and returned as an `auth` cookie
-   * if yes, then listenr checks if path is decrypted yet.
+   * if yes, then `listener` checks if path is decrypted yet.
      * If not, user's token is used as the key to decrypt the securefs password which is
        then used to temporarily decrypt the beancount sub-directory.
      * If the path is already decrypted, the timer is reset for when the path will be unmounted
@@ -71,7 +71,7 @@ overriding the token-age at the browser will not bypass this).
 The user's hashed password (but not the password itself) can be recovered from the `auth` token using the
 private-key.  This hashed password is then used as a key to decrypt the SecureFS password.
 
-This process allows having  changeable auser-defined password for browser-entry and a independent password for
+This process allows having a changeable user-defined password for browser-entry and a independent password for
 SecureFS accessr, while limiting the exposure of the browser's access to 24 hours between password entry.
 
 ## Beancount and GPG
@@ -79,4 +79,3 @@ Beancount has native support for GPG encryption at the file level, and Fava can 
 making this project a waste of time.  However teh GPG process does not work very well with multi-file beancount
 files (in my experience) and using it disables editing in Fava.  Additionally, using Fava-encrypt allows keeping
 other documents (like account statements) encrypted at rest while still being available to Fava as needed.
-functionality in Fava.
