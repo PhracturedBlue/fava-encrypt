@@ -51,7 +51,7 @@ TEST_FILE = ".encrypted"
 SECUREFS_STARTUP_TIMEOUT = 10
 SECUREFS_LIFETIME = 10 * 60
 COOKIE_LIFETIME = 24 * 3600
-COOKIE_KEY = Fernet(b'kh44idAzyc4YGpnns2WWw_ewlsS3aA3PSrip8ToRVQ0=')
+READY_FILE = "/tmp/.beancount/ready"
 
 LOGIN = {
     'token': None,
@@ -93,6 +93,8 @@ async def test_expire():
             LOGIN['expire'] = 0
             LOGIN['poll'] = None
             logging.warning("Expired")
+            if os.path.exists(READY_FILE):
+                os.unlink(READY_FILE)
             break
         logging.info("%d seconds left.  Trying again in 30 secs", LOGIN['expire'] - time.time())
         await asyncio.sleep(30)
@@ -117,6 +119,8 @@ async def login(key):
         return False
     logging.warning("Checking for: %s", LOGIN['TEST_FILE'])
     if os.path.exists(LOGIN['TEST_FILE']):
+        with open(READY_FILE, "w") as _fh:
+            _fh.write("READY")
         change_url = LOGIN.get('CHANGE_URL')
         if change_url:
             async with ClientSession() as client:
@@ -389,6 +393,8 @@ def main():
         if not os.path.exists(args.encrypted_path):
             logging.error("%s does not exist", path)
             return 1
+    if os.path.exists(READY_FILE):
+        os.unlink(READY_FILE)
     LOGIN['ENCRYPTED_DIR'] = args.encrypted_path
     LOGIN['DECRYPTED_DIR'] = args.decrypted_path
     LOGIN['CHANGE_URL'] = args.change_url

@@ -28,7 +28,7 @@ RUN apt-get update && apt-get install -y \
         pip build-essential && \
     rm -rf /var/lib/apt/lists/*
 ARG PIP_MODULES
-RUN pip install fava aiohttp cryptography && \
+RUN pip install fava aiohttp cryptography inotify&& \
     if [ "${PIP_MODULES}" != "" ]; then pip install ${PIP_MODULES}; fi
 
 FROM debian:bullseye-slim
@@ -43,13 +43,15 @@ RUN apt-get update && apt-get install -y \
 RUN useradd -ms /bin/bash fava
 ARG LEDGER_DIR=/ledger
 ARG ENCRYPTED_DIR=/secure
+ARG KEEP_OPEN=300
 ARG NGINX_PORT_REDIRECT=off
-COPY ledger/ $LEDGER_DIR
-RUN chown -R fava /ledger/
-COPY Procfile listener.py auth.token /app/
+RUN mkdir /ledger /tmp/.beancount
+RUN chown -R fava /ledger/ /tmp/.beancount
+COPY Procfile listener.py auth.token fava_wrap.py /app/
 COPY nginx.conf /etc/nginx/nginx.conf
-RUN sed -i -e "s|LEDGER_DIR|${LEDGER_DIR}|g" -e "s|ENCRYPTED_DIR|${ENCRYPTED_DIR}|" /app/Procfile
-RUN sed -i -e 's/port_in_redirect off/port_in_redirect ${NGINX_PORT_REDIRECT}/' /etc/nginx/nginx.conf
+RUN sed -i -e "s|LEDGER_DIR|${LEDGER_DIR}|g" -e "s|ENCRYPTED_DIR|${ENCRYPTED_DIR}|" -e "s|KEEP_OPEN|${KEEP_OPEN}|" /app/Procfile
+RUN sed -i -e "s/port_in_redirect off/port_in_redirect ${NGINX_PORT_REDIRECT}/" /etc/nginx/nginx.conf
+RUN sed -i -e "s|WATCH_DIR =.*|WATCH_DIR = '${LEDGER_DIR}'|" /app/fava_wrap.py
 WORKDIR /app
 EXPOSE 5000
 ENV PYTHONUNBUFFERED=1
