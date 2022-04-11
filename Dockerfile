@@ -25,11 +25,23 @@ RUN git clone https://github.com/nginx-proxy/forego/ \
 
 FROM debian:bullseye as pybuild
 RUN apt-get update && apt-get install -y \
-        pip build-essential && \
+        pip build-essential curl python3-venv git && \
+    curl -fsSL https://deb.nodesource.com/setup_16.x | bash - && \
+    apt install nodejs && \
     rm -rf /var/lib/apt/lists/*
+RUN pip install tox aiohttp cryptography
+ARG FAVA_GIT_REPO
+RUN if [ x"$FAVA_GIT_REPO" != "x" ]; then \
+      cd /tmp && git clone --depth 1 -b $(echo $FAVA_GIT_REPO | sed -e 's/.*@//') $(echo $FAVA_GIT_REPO | sed -e 's/@.*//') && \
+      cd fava && (cd frontend && npm ci && npm run build) && tox -e build-dist && \
+      pip install /tmp/fava/dist/*.whl; \
+      cd && rm -rf /tmp/fava; \
+    else \
+      pip install fava; \
+    fi
 ARG PIP_MODULES
-RUN pip install fava aiohttp cryptography inotify&& \
-    if [ "${PIP_MODULES}" != "" ]; then pip install ${PIP_MODULES}; fi
+RUN pip install aiohttp cryptography inotify && \
+    if [ x"${PIP_MODULES}" != "x" ]; then pip install ${PIP_MODULES}; fi
 
 FROM debian:bullseye-slim
 COPY --from=forego /usr/local/bin/forego /usr/local/bin/forego
