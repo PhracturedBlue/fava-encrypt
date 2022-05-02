@@ -39,7 +39,7 @@ class Watcher:
         if encrypted != self._encrypted:
             logging.warning(f"Encryption status changed to: {encrypted}")
             self._encrypted = encrypted
-        if not encrypted:
+        if encrypted:
             return False
         return self._watcher.check()
   
