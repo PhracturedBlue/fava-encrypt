@@ -18,28 +18,36 @@ def enable_encryption(entries, options_map, dirs):
     return entries, []
 
 class Watcher:
-    __slots__ = ["_encryption_file", "_watcher", "_encrypted"]
+    __slots__ = ["_encryption_file", "_watcher", "_decrypted"]
 
     def __init__(self, ledger) -> None:
         path = ledger.beancount_file_path
+        self._decrypted = False
         self._encryption_file = os.path.join(os.path.dirname(path), ".encrypted")
-        self._encrypted = self.is_encrypted()
+        self.is_decrypted()
         self._watcher = ledger._watcher
-        logging.warning(f"Enable socket watcher for: {path} Encrypted: {self._encrypted}")
+        logging.warning(f"Enable socket watcher for: {path} Decrypted: {self._decrypted}")
         pass
 
-    def is_encrypted(self):
-        return os.path.exists(self._encryption_file)
-        
+    def is_decrypted(self):
+        decrypted = os.path.exists(self._encryption_file)
+        if decrypted != self._decrypted:
+            logging.warning("Encryption status changed to: "
+                           f"{'decrypted' if decrypted else 'encrypted'}")
+            self._decrypted = decrypted
+        return decrypted
+
     def update(self, files: Iterable[str], folders: Iterable[str]) -> None:
         return self._watcher.update(files, folders)
 
     def check(self) -> bool:
-        encrypted = self.is_encrypted()
-        if encrypted != self._encrypted:
-            logging.warning(f"Encryption status changed to: {encrypted}")
-            self._encrypted = encrypted
-        if not encrypted:
+        if not self.is_decrypted():
             return False
-        return self._watcher.check()
-  
+        last_checked = self._watcher._last_checked
+        status = self._watcher.check()
+        if not self.is_decrypted():
+            # decyprtion status change happened during check revert status
+            self._watcher._last_checked = last_checked
+            return False
+        return status
+
