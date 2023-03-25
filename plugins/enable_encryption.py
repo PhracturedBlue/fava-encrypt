@@ -43,11 +43,14 @@ class Watcher:
     def check(self) -> bool:
         if not self.is_decrypted():
             return False
-        last_checked = self._watcher._last_checked
+        last_checked = self._watcher.last_checked
         status = self._watcher.check()
         if not self.is_decrypted():
             # decyprtion status change happened during check revert status
-            self._watcher._last_checked = last_checked
+            self._watcher.last_checked = last_checked
             return False
         return status
 
+    @property
+    def last_checked(self):
+        return self._watcher.last_checked
